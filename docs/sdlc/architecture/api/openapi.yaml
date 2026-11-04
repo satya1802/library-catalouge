@@ -2,6 +2,274 @@
 openapi: 3.1.0
 info:
   title: Library catalouge
-  version: architecture-v0
+  version: architecture-v1
   description: Designed API from the approved architecture (not extracted from code).
-paths: {}
+paths:
+  /api/auth/login:
+    post:
+      summary: Staff login with email/password; generic error on failure revealing
+        neither field.
+      description: Staff login with email/password; generic error on failure revealing
+        neither field.
+      operationId: post_api_auth_login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ email, password }'
+      responses:
+        '200':
+          description: '200 session established | 401 { error: ''Invalid credentials''
+            }'
+  /api/auth/logout:
+    post:
+      summary: End the staff session so management pages require login again.
+      description: End the staff session so management pages require login again.
+      operationId: post_api_auth_logout
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: none
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /api/auth/password-reset:
+    post:
+      summary: Request a password-reset email delivered via SMTP.
+      description: Request a password-reset email delivered via SMTP.
+      operationId: post_api_auth_password_reset
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ email }'
+      responses:
+        '200':
+          description: 202 accepted (always generic)
+  /api/facets:
+    get:
+      summary: Public distinct author/subject/availability values for browse filters.
+      description: Public distinct author/subject/availability values for browse filters.
+      operationId: get_api_facets
+      parameters: []
+      responses:
+        '200':
+          description: '200 { authors: [...], subjects: [...], availabilities: [...]
+            }'
+  /api/items:
+    get:
+      summary: Staff dashboard listing of records with search/filter to find a record
+        to manage.
+      description: Staff dashboard listing of records with search/filter to find a
+        record to manage.
+      operationId: get_api_items
+      parameters: []
+      responses:
+        '200':
+          description: '200 { results: [...], total }'
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create an item record; validates required fields and upserts to Meilisearch.
+      description: Create an item record; validates required fields and upserts to
+        Meilisearch.
+      operationId: post_api_items
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ title, author, isbn?, publisher?, publication_year?,
+                subject?, description?, shelf_location?, availability_status }'
+      responses:
+        '200':
+          description: 201 { id, ... } | 400 { field_errors }
+      security:
+      - bearerAuth: []
+  /api/items/{id}:
+    get:
+      summary: Public item detail with full bibliographic fields, cover URL (or placeholder)
+        and read-only availability.
+      description: Public item detail with full bibliographic fields, cover URL (or
+        placeholder) and read-only availability.
+      operationId: get_api_items_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 200 { id, title, author, isbn, publisher, publication_year,
+            subject, description, shelf_location, availability_status, cover_url }
+    put:
+      summary: Edit an item record; changes reflected on public detail, search and
+        filters.
+      description: Edit an item record; changes reflected on public detail, search
+        and filters.
+      operationId: put_api_items_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ item fields }'
+      responses:
+        '200':
+          description: 200 { id, ... } | 400 { field_errors }
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Delete an item after staff confirmation; removes it from catalogue
+        and search index.
+      description: Delete an item after staff confirmation; removes it from catalogue
+        and search index.
+      operationId: delete_api_items_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /api/items/{id}/cover:
+    post:
+      summary: Upload or replace a cover image; validates it is a supported image,
+        stores in S3.
+      description: Upload or replace a cover image; validates it is a supported image,
+        stores in S3.
+      operationId: post_api_items_id_cover
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: multipart file
+      responses:
+        '200':
+          description: '200 { cover_url } | 400 { error: ''Unsupported image'' }'
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Remove a cover image so the item falls back to the placeholder.
+      description: Remove a cover image so the item falls back to the placeholder.
+      operationId: delete_api_items_id_cover
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /api/search:
+    get:
+      summary: Public keyword search with optional author, subject and availability
+        facet filters; returns ranked results via Meilisear
+      description: Public keyword search with optional author, subject and availability
+        facet filters; returns ranked results via Meilisearch.
+      operationId: get_api_search
+      parameters: []
+      responses:
+        '200':
+          description: '200 { results: [{id, title, author, availability_status, cover_url}],
+            total }'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    staff_user:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        password_hash:
+          type: string
+        is_active:
+          type: boolean
+        last_login:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email
+      - password_hash
+      - is_active
+      - created_at
+    item:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        isbn:
+          type: string
+        publisher:
+          type: string
+        publication_year:
+          type: integer
+        subject:
+          type: string
+        description:
+          type: string
+        shelf_location:
+          type: string
+        availability_status:
+          type: string
+        cover_image_key:
+          type: string
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - author
+      - availability_status
+      - created_at
+      - updated_at

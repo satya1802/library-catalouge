@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 Build a Library Catalogue System
 
-**Documentation version:** v1
+**Documentation version:** v2
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -14,14 +14,14 @@ Build a Library Catalogue System
 | Document | State |
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
-| [Architecture](architecture/README.md) | 1 entry |
+| [Architecture](architecture/README.md) | 15 entries |
 | [Development](development/README.md) | 1 entry |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 1 entry |
 | [Maintenance](maintenance/README.md) | 1 entry |
-| [Data model](architecture/data-model.md) | not generated yet |
-| [API (OpenAPI)](architecture/api/openapi.yaml) | not generated yet |
-| [Decisions (ADRs)](architecture/adr/README.md) | 0 decisions |
+| [Data model](architecture/data-model.md) | generated |
+| [API (OpenAPI)](architecture/api/openapi.yaml) | generated |
+| [Decisions (ADRs)](architecture/adr/README.md) | 4 decisions |
 | [Sprint plan](development/sprint-plan.md) | not generated yet |
 | [Developer guide](development/developer-guide.md) | not generated yet |
 | [API reference](development/api-reference.md) | 0 routes |
@@ -31,7 +31,7 @@ Build a Library Catalogue System
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 11 requirements |
-| [Changelog](CHANGELOG.md) | 1 version |
+| [Changelog](CHANGELOG.md) | 2 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -39,7 +39,18 @@ Build a Library Catalogue System
 <!-- sdlc:auto:start open-gaps -->
 ### Architecture
 
-- Architecture phase has not started -- no screen inventory, data model, API design, or component/integration design available.
+- Overview does not state which of US-001..US-011 each architectural capability satisfies; mapping must come from the requirements phase.
+- No explicit requirement id(s) attached to this component in the architecture input.
+- Specific SMTP provider/configuration not specified.
+- Not mapped to a specific US- requirement id in the architecture input.
+- Supported image formats/size limits are not specified.
+- No explicit requirement id(s) attached to these entities in the architecture input.
+- Field-level validation rules (e.g. ISBN format, required vs optional fields) are not specified at the entity level.
+- No explicit requirement id(s) attached to individual endpoints in the architecture input.
+- Request/response payload schemas and pagination details for list endpoints are not specified.
+- Meilisearch and the Django API share a single EC2 instance with no redundancy or failover described; this single point of failure is not addressed as a decision or accepted risk in the input.
+- No explicit requirement id(s) attached to the deployment topology.
+- Technology decisions cite NFR-004 and NFR-006, but the known requirement keys for this project are only US-001 through US-011 -- these NFR ids are not resolvable against the given requirement set and should be confirmed/reconciled with the requirements phase.
 
 ### Development
 
