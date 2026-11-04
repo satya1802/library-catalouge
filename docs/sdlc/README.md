@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 Build a Library Catalogue System
 
-**Documentation version:** v1
+**Documentation version:** v2
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -31,7 +31,7 @@ Build a Library Catalogue System
 | [Runbook](deployment/runbook.md) | deployed |
 | [Release notes](deployment/release-notes.md) | 1 release |
 | [Traceability matrix](traceability-matrix.md) | 11 requirements |
-| [Changelog](CHANGELOG.md) | 1 version |
+| [Changelog](CHANGELOG.md) | 2 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -46,8 +46,10 @@ Build a Library Catalogue System
 
 ### Deployment
 
-- No frontend URL recorded.
-- No backend URL recorded.
-- No confirmation this deployment has executed or succeeded.
-- No testing phase evidence precedes this deployment, so it is unclear whether the deployed version has been verified.
+- No deployment date/timestamp recorded.
+- No record of who approved or executed this deployment.
+- No rollback or contingency plan documented.
+- No linkage given between this deployment and specific requirements (US-001..US-011) or dev tickets -- cannot confirm which features/stories this release includes.
+- No mention of pre-deployment test results or sign-off gating this release.
+- No environment details (e.g., staging vs. production, database/config, secrets management) provided.
 <!-- sdlc:auto:end open-gaps -->

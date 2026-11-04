@@ -3,14 +3,16 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start narrative -->
-### DEPLOY-09f4d1d44da4 · draft · source: deployment:09f4d1d44da4
+### DEPLOY-09f4d1d44 · approved · source: deployment:09f4d1d44da4
 
-A deployment (version 09f4d1d44da4) is queued; no live frontend or backend URLs are assigned yet.
+Library Catalogue System deployed and marked live, version 09f4d1d44da4, with separate frontend and backend endpoints.
 
-Deployment status reported as 'queued'. No frontend URL and no backend URL recorded, so there is no confirmed live environment at this time.
+Status: live. Version/build identifier: 09f4d1d44da4. Frontend URL: https://pa0e963c551ac.dshared.amplifyapp.local. Backend URL: https://a0e963c551ac.local.awsapprunner.local. No further details (deployment date/time, who approved or triggered the release, environment name, infrastructure/config changes, or rollback procedure) were included in the input.
 
-- ⚠ No frontend URL recorded.
-- ⚠ No backend URL recorded.
-- ⚠ No confirmation this deployment has executed or succeeded.
-- ⚠ No testing phase evidence precedes this deployment, so it is unclear whether the deployed version has been verified.
+- ⚠ No deployment date/timestamp recorded.
+- ⚠ No record of who approved or executed this deployment.
+- ⚠ No rollback or contingency plan documented.
+- ⚠ No linkage given between this deployment and specific requirements (US-001..US-011) or dev tickets -- cannot confirm which features/stories this release includes.
+- ⚠ No mention of pre-deployment test results or sign-off gating this release.
+- ⚠ No environment details (e.g., staging vs. production, database/config, secrets management) provided.
 <!-- sdlc:auto:end narrative -->
