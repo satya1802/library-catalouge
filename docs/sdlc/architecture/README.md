@@ -5,130 +5,148 @@
 <!-- sdlc:auto:start narrative -->
 ## Overview
 
-### ARCH-OVERVIEW · approved · source: architecture:summary
+### ARCH-001 · approved · source: architecture:summary
 
-Approved v1 architecture for a lightweight public library catalogue: Vue 3 SPA frontend, Django 5.1 REST backend, PostgreSQL 16 as system of record for ~10,000 bibliographic records, Meilisearch for typo-tolerant search and faceted filtering, Amazon S3 for cover images, and SMTP for staff account emails, all hosted on AWS.
+Approved (v1) lightweight architecture: Vue 3 SPA + Django 5.1 REST API + PostgreSQL 16 + Meilisearch + S3 + SMTP, all on AWS.
 
-The public can browse, search and view item detail pages without logging in. Library staff authenticate with email/password to a management dashboard where they manually create, edit and delete item records and upload cover images. Every staff change is re-indexed into Meilisearch and cover images are served from S3. Architecture status is 'approved', version 1.
+Public users browse/search/view item details with no login. Staff authenticate (email/password) to a management dashboard to manually create/edit/delete records and manage cover images; every change is re-indexed into Meilisearch and covers are served from S3.
 
-- ⚠ Overview does not state which of US-001..US-011 each architectural capability satisfies; mapping must come from the requirements phase.
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005
 
-### ARCH-COMP-FRONTEND · approved · source: architecture:components.frontend
+### ARCH-002 · approved · source: architecture:component:frontend
 
-Catalogue Web App is a responsive Vue 3 single-page application serving both the public search/browse/detail pages and the authenticated staff management dashboard.
+Catalogue Web App (Vue 3) -- responsive SPA for public pages and staff dashboard.
 
-Component type: frontend. Technology: Vue 3. Responsibilities: render public search, browse and item-detail pages; render the staff management dashboard; call the backend REST API for all data operations (search, item CRUD, auth, cover upload).
+Single Vue 3 SPA serves public search/browse/detail pages plus the authenticated staff management dashboard, consuming the Django REST API. Deployed as a static build (S3 static website / CloudFront).
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
+**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005
 
-### ARCH-COMP-BACKEND · approved · source: architecture:components.backend
+### ARCH-003 · approved · source: architecture:component:backend
 
-Catalogue API & Admin is the Django 5.1 application exposing REST endpoints for search, item detail, staff auth and item CRUD.
+Catalogue API & Admin (Django 5.1) -- REST API for search, item detail, staff auth and CRUD.
 
-Component type: backend. Technology: Django 5.1. Responsibilities: validate cover image uploads; write records to PostgreSQL; push documents to Meilisearch on changes; store cover images in S3; send staff account/password-reset emails via SMTP.
+Validates cover uploads, writes records to PostgreSQL, pushes documents to Meilisearch, stores covers in S3, sends staff account emails via SMTP. Endpoints:
+- GET /api/search -- public keyword search with author/subject/availability facets, ranked via Meilisearch.
+- GET /api/items/{id} -- public item detail with cover URL or placeholder and read-only availability.
+- GET /api/facets -- public distinct author/subject/availability values.
+- POST /api/auth/login -- staff login, generic error on failure.
+- POST /api/auth/logout -- ends staff session.
+- POST /api/auth/password-reset -- sends password-reset email via SMTP.
+- GET /api/items -- staff dashboard listing with search/filter.
+- POST /api/items -- create item, validates required fields, upserts to Meilisearch.
+- PUT /api/items/{id} -- edit item, changes reflected publicly and in search/filters.
+- DELETE /api/items/{id} -- delete item after confirmation, removes from catalogue and index.
+- POST /api/items/{id}/cover -- upload/replace cover, validates image type, stores in S3.
+- DELETE /api/items/{id}/cover -- remove cover, falls back to placeholder.
+Deployed via Gunicorn on Python 3.12, single AWS EC2 instance.
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
+**Related:** EPIC-001, EPIC-003, EPIC-004, EPIC-005
 
-### ARCH-COMP-DATABASE · approved · source: architecture:components.database
+### ARCH-004 · approved · source: architecture:component:database
 
-Catalogue Database is PostgreSQL 16, the system of record for item records, staff accounts and availability status.
+Catalogue Database (PostgreSQL 16) -- system of record for items, staff accounts and availability.
 
-Component type: database. Technology: PostgreSQL 16. Role: source of truth for all edits; feeds the Meilisearch index whenever records change.
+Entities:
+- staff_user: id, email, password_hash, is_active, last_login, created_at.
+- item: id, title, author, isbn, publisher, publication_year, subject, description, shelf_location, availability_status, cover_image_key, created_by, created_at, updated_at.
+Hosted as Amazon RDS for PostgreSQL 16, managed.
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
+**Related:** EPIC-003, EPIC-004
 
-### ARCH-COMP-SEARCH · approved · source: architecture:components.search
+### ARCH-005 · approved · source: architecture:component:search
 
-Search Index is a Meilisearch v1.10.3 index of catalogue items providing typo-tolerant keyword search and faceted filtering by author/subject/availability.
+Search Index (Meilisearch v1.10.3) -- typo-tolerant keyword search and faceted filtering.
 
-Component type: search. Technology: Meilisearch v1.10.3 (image getmeili/meilisearch:v1.10.3). Serves both public search/browse and dashboard search. Index is kept in sync via upserts from the backend on item create/edit/delete.
+Index of catalogue items providing typo-tolerant keyword search and author/subject/availability facets for both public search and the staff dashboard search. Runs as the getmeili/meilisearch:v1.10.3 container, deployed via Docker on the same API EC2 instance.
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
+**Related:** EPIC-001, EPIC-004, NFR-004, NFR-005
 
-### ARCH-COMP-STORAGE · approved · source: architecture:components.object_storage
+### ARCH-006 · approved · source: architecture:component:object_storage
 
-Cover Image Store is an Amazon S3 bucket storing uploaded cover images and serving them to public catalogue and detail pages.
+Cover Image Store (Amazon S3) -- stores and serves uploaded cover images.
 
-Component type: object_storage. Technology: Amazon S3. Stores cover images keyed and linked to item records; public pages render the cover from S3 or fall back to a placeholder if absent.
+S3 bucket stores uploaded cover images and serves them to public catalogue and detail pages. Managed object store, no server management needed.
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
+**Related:** EPIC-005, NFR-003
 
-### ARCH-COMP-EMAIL · approved · source: architecture:components.email
+### ARCH-007 · approved · source: architecture:component:email
 
-Email Sender is an SMTP server used to deliver staff account-setup and password-reset emails.
+Email Sender (SMTP server) -- delivers staff account-setup and password-reset emails.
 
-Component type: email. Technology: SMTP server (external). Used exclusively for staff-facing account/password-reset email delivery; no public-facing email functionality is described.
+External SMTP endpoint used for staff account-setup and password-reset emails; low volume, standard SMTP server sufficient (no paid email service needed).
 
-- ⚠ No explicit requirement id(s) attached to this component in the architecture input.
-- ⚠ Specific SMTP provider/configuration not specified.
+**Related:** EPIC-003
 
-### ARCH-FLOW-SEARCH · approved · source: architecture:critical_paths.Public keyword search & filter
+### ARCH-008 · approved · source: architecture:critical_path:public_search
 
-Critical path for anonymous public search and filtering through Meilisearch.
+Critical path: public keyword search & filter.
 
-An anonymous visitor submits a keyword and optional author/subject/availability filters. The backend (Django) queries Meilisearch and returns ranked, typo-tolerant results including title, author and availability. Implemented via GET /api/search and GET /api/facets.
+Anonymous visitor submits a keyword and optional author/subject/availability filters; backend queries Meilisearch and returns ranked, typo-tolerant results with title, author and availability.
 
-- ⚠ Not mapped to a specific US- requirement id in the architecture input.
+**Related:** US-001, US-002
 
-### ARCH-FLOW-CREATE-EDIT · approved · source: architecture:critical_paths.Staff create/edit item with re-index
+### ARCH-009 · approved · source: architecture:critical_path:create_edit_reindex
 
-Critical path for authenticated staff creating or editing an item record, with automatic search re-indexing.
+Critical path: staff create/edit item with re-index.
 
-Authenticated staff submit the item form. The backend validates required fields, persists the record to PostgreSQL, and upserts the corresponding document into Meilisearch so the change becomes publicly searchable immediately. Implemented via POST /api/items and PUT /api/items/{id}.
+Authenticated staff submit the item form; backend validates required fields, persists to PostgreSQL, and upserts the document into Meilisearch so it becomes publicly searchable immediately.
 
-- ⚠ Not mapped to a specific US- requirement id in the architecture input.
+**Related:** US-006, US-007
 
-### ARCH-FLOW-COVER-UPLOAD · approved · source: architecture:critical_paths.Cover image upload & validation
+### ARCH-010 · approved · source: architecture:critical_path:cover_upload
 
-Critical path for staff uploading and validating a cover image.
+Critical path: cover image upload & validation.
 
-Staff upload a cover image; the backend validates it is a supported image format, stores it in S3, and links the resulting key to the item record. Public pages render the cover image or a placeholder if none is linked. Implemented via POST /api/items/{id}/cover and DELETE /api/items/{id}/cover.
+Staff upload a cover image; backend validates it is a supported image, stores it in S3, links the key to the item; public pages render the cover or a placeholder.
 
-- ⚠ Not mapped to a specific US- requirement id in the architecture input.
-- ⚠ Supported image formats/size limits are not specified.
+**Related:** US-010, US-011
 
-### ARCH-FLOW-LOGIN · approved · source: architecture:critical_paths.Staff login & management-area protection
+### ARCH-011 · approved · source: architecture:critical_path:staff_login
 
-Critical path for staff authentication and protection of the management dashboard.
+Critical path: staff login & management-area protection.
 
-Staff authenticate with email and password. Valid credentials open a session and grant access to the dashboard. Invalid credentials return a generic error (not revealing which field was wrong). Unauthenticated access to management endpoints is redirected to login. Implemented via POST /api/auth/login, POST /api/auth/logout and POST /api/auth/password-reset.
+Staff authenticate with email/password; valid credentials open a session and the dashboard; invalid credentials return a generic error; unauthenticated access to management endpoints redirects to login.
 
-- ⚠ Not mapped to a specific US- requirement id in the architecture input.
+**Related:** US-004, US-005
 
-### ARCH-DATA-MODEL · approved · source: architecture:entities
+### ARCH-012 · approved · source: architecture:deployment_nodes
 
-Two core data entities are defined: staff_user and item.
+Deployment topology for the approved architecture.
 
-staff_user: id, email, password_hash, is_active, last_login, created_at -- backs staff authentication and account management. item: id, title, author, isbn, publisher, publication_year, subject, description, shelf_location, availability_status, cover_image_key, created_by, created_at, updated_at -- the full bibliographic record stored in PostgreSQL and mirrored (minus internal-only fields as applicable) into Meilisearch.
+- Web App: Vue 3 SPA build served via S3 static website / CloudFront (static assets).
+- API Server: Django 5.1 via Gunicorn, Python 3.12, single AWS EC2 instance.
+- PostgreSQL: Amazon RDS for PostgreSQL 16 (managed).
+- Meilisearch: getmeili/meilisearch:v1.10.3 container, Docker on the API EC2 instance.
+- Cover Storage: Amazon S3 bucket (managed object store).
+- Email: external SMTP endpoint.
 
-- ⚠ No explicit requirement id(s) attached to these entities in the architecture input.
-- ⚠ Field-level validation rules (e.g. ISBN format, required vs optional fields) are not specified at the entity level.
+### ARCH-013 · approved · source: architecture:tech_decision:frontend
 
-### ARCH-API · approved · source: architecture:endpoints
+Frontend technology decision: Vue 3 (alternatives considered: React, Svelte).
 
-REST API surface exposed by the Django backend, split between public (unauthenticated) and staff (authenticated) endpoints.
+Chosen to deliver the responsive public search/browse/detail pages and staff dashboard as a single SPA consuming the Django REST API, satisfying NFR-006 (responsive desktop/mobile web).
 
-Public endpoints: 1) GET /api/search -- keyword search with optional author/subject/availability filters, ranked via Meilisearch. 2) GET /api/items/{id} -- item detail with full bibliographic fields, cover URL or placeholder, and read-only availability. 3) GET /api/facets -- distinct author/subject/availability values for browse filters. Auth endpoints: 4) POST /api/auth/login -- staff login, generic error on failure. 5) POST /api/auth/logout -- ends staff session. 6) POST /api/auth/password-reset -- requests a password-reset email via SMTP. Staff management endpoints: 7) GET /api/items -- dashboard listing with search/filter to locate a record. 8) POST /api/items -- create an item; validates required fields and upserts to Meilisearch. 9) PUT /api/items/{id} -- edit an item; changes reflected in public detail, search and filters. 10) DELETE /api/items/{id} -- delete an item after staff confirmation; removed from catalogue and search index. 11) POST /api/items/{id}/cover -- upload/replace cover image; validates supported image type, stores in S3. 12) DELETE /api/items/{id}/cover -- remove cover image, item falls back to placeholder.
+**Related:** NFR-006
 
-- ⚠ No explicit requirement id(s) attached to individual endpoints in the architecture input.
-- ⚠ Request/response payload schemas and pagination details for list endpoints are not specified.
+### ARCH-014 · approved · source: architecture:tech_decision:backend
 
-### ARCH-DEPLOYMENT · approved · source: architecture:deployment_nodes
+Backend technology decision: Django 5.1 (alternatives considered: FastAPI, Express).
 
-Single-environment AWS deployment: static SPA hosting, one API EC2 instance running both Django and Meilisearch, managed RDS Postgres, S3, and external SMTP.
+Chosen for the REST API, built-in auth/session handling for staff login, an admin-grade ORM for item records, and clean integration points for Meilisearch and S3.
 
-Nodes: Web App -- Vue 3 SPA build served as static assets via S3 static website / CloudFront. API Server -- Django 5.1 via Gunicorn on Python 3.12, on a single AWS EC2 instance. PostgreSQL -- Amazon RDS for PostgreSQL 16 (managed). Meilisearch -- getmeili/meilisearch:v1.10.3 container running via Docker on the same API EC2 instance. Cover Storage -- Amazon S3 bucket (managed object store). Email -- external SMTP endpoint.
+### ARCH-015 · approved · source: architecture:tech_decision:database
 
-- ⚠ Meilisearch and the Django API share a single EC2 instance with no redundancy or failover described; this single point of failure is not addressed as a decision or accepted risk in the input.
-- ⚠ No explicit requirement id(s) attached to the deployment topology.
+Database technology decision: PostgreSQL 16 (alternatives considered: MySQL, SQLite).
 
-### ARCH-TECH-DECISIONS · approved · source: architecture:technology_decisions
+Chosen as the reliable relational store for ~10,000 structured bibliographic records and staff accounts, and as the source of truth feeding the Meilisearch index (NFR-004).
 
-Four key technology decisions were made: Vue 3 for frontend, Django 5.1 for backend, PostgreSQL 16 for the database, and AWS for cloud hosting, each with alternatives considered.
+**Related:** NFR-004
 
-Frontend: Vue 3 chosen over React/Svelte to deliver the responsive public pages and staff dashboard as a single SPA consuming the Django REST API (cited as addressing NFR-006). Backend: Django 5.1 chosen over FastAPI/Express for built-in auth/session handling, an admin-grade ORM, and clean integration points for Meilisearch and S3. Database: PostgreSQL 16 chosen over MySQL/SQLite as a reliable relational store for ~10,000 structured records and staff accounts, and as the source of truth feeding Meilisearch (cited as addressing NFR-004). Cloud: AWS chosen over GCP/Azure to host the API server, managed PostgreSQL, and S3 cover storage together, keeping cost low for a mostly-idle single-library workload.
+### ARCH-016 · approved · source: architecture:tech_decision:cloud
 
-- ⚠ Technology decisions cite NFR-004 and NFR-006, but the known requirement keys for this project are only US-001 through US-011 -- these NFR ids are not resolvable against the given requirement set and should be confirmed/reconciled with the requirements phase.
+Cloud technology decision: AWS (alternatives considered: GCP, Azure).
+
+Chosen to host the API server, managed PostgreSQL database and S3 cover-image storage in one place, keeping cost low for a mostly-idle single-library workload.
 <!-- sdlc:auto:end narrative -->
 
 <!-- sdlc:auto:start building-blocks -->

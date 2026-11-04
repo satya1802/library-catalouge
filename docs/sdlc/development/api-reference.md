@@ -3,9 +3,7 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start endpoints -->
-| Method | Path | Handler | Source | Summary |
-|---|---|---|---|---|
-| GET | /health | health | `backend/config/urls.py` | — |
+_No routes found._
 <!-- sdlc:auto:end endpoints -->
 
 <!-- sdlc:auto:start drift -->
@@ -26,5 +24,5 @@
 <!-- sdlc:auto:end drift -->
 
 <!-- sdlc:auto:start source -->
-Generated from commit `b01456c`
+_Not generated yet._
 <!-- sdlc:auto:end source -->

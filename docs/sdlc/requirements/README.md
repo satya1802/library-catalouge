@@ -5,223 +5,112 @@
 <!-- sdlc:auto:start narrative -->
 ## Summary
 
-### REQ-STACK · approved · source: requirements:technology-stack
+### EPIC-001 · draft · source: requirements:EPIC-001
 
-Product owner approved an exact technology stack for the Library Catalogue System: Django 5.1 backend, PostgreSQL 16 database, Vue 3 frontend, hosted on AWS.
+Public, login-free keyword search and filtering across up to ~10,000 catalogue items, powered by Meilisearch.
 
-Stack approved by the product owner, to be designed against exactly as specified (no substitutions):
-- Backend: Django 5.1
-- Database: PostgreSQL 16 -- chosen because catalogue data (title, author, ISBN, subject, availability, shelf location) is structured and relational; handles ~10,000 items with modest traffic, keyword search, and author/subject/availability filters while keeping data reliable for staff edits.
-- Frontend: Vue 3
-- Cloud: AWS -- chosen for cheap, reliable hosting for a single library with modest, mostly-idle traffic; covers server, PostgreSQL DB, and cover-image storage in one place at low running cost. Only option offered.
+- US-001 [critical] Keyword search of holdings: anonymous visitors search by keyword with no login; results ranked by relevance via Meilisearch; each result shows title/author/availability (AC-001, AC-003); empty-results message shown with search box still available when nothing matches (AC-002).
+- US-002 [high] Browse/filter by author, subject, availability: filters update results via Meilisearch filtering (AC-004); filters combine with keyword search (AC-005); clearing a filter removes its restriction (AC-006).
 
-### REQ-SERVICES · approved · source: requirements:services
+**Related:** US-001, US-002, NFR-004, NFR-005
 
-Three runtime services approved: Amazon S3 for cover images, Meilisearch for catalogue search, and an SMTP server for staff account emails.
+### EPIC-002 · draft · source: requirements:EPIC-002
 
-Services approved by product owner, to be included exactly as specified:
-- File storage: Amazon S3 (SaaS; env vars AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET) -- stores staff-uploaded cover images cheaply, serves them to public pages without bloating the database.
-- Search: Meilisearch (container getmeili/meilisearch:v1.10.3) -- provides fast, typo-tolerant keyword search across title/author/subject so misspellings still find results; plain DB search would miss these.
-- Email: SMTP server (SaaS; env vars SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD) -- sends password-reset and account-setup emails for staff email/password accounts; standard SMTP suffices at this low volume.
-Required API keys/env vars for the app: AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, S3_BUCKET, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER.
+Public, login-free item detail page showing full bibliographic data, cover image, shelf/location and read-only availability.
 
-**Related:** US-001, US-002, US-004, US-010, US-011
+- US-003 [high] View full item detail: selecting an item from search/browse opens detail page with title, author, ISBN, publisher, year, subject/category, description, cover, shelf/location, availability (AC-007); placeholder image shown if no cover uploaded, other fields still shown normally (AC-008); availability status shown read-only (AC-009).
 
-### REQ-SCOPE · draft · source: requirements:scope
+**Related:** US-003
 
-Delivery scope is lightweight, requirements version 1. In-scope capabilities cover public search/browse, item detail pages, staff login, manual record CRUD, and cover image management. Several library-system features are explicitly out of scope.
+### EPIC-003 · draft · source: requirements:EPIC-003
 
-In scope: public keyword search of holdings; item detail pages (bibliographic fields, cover, shelf/location, availability); browse/filter by author, subject, availability; staff login to management area; manual item create/edit/delete; cover image upload; staff dashboard; Meilisearch for search/filtering; S3 for cover image storage; public browsing without login, staff-only authentication.
-Out of scope -- not to be designed or built: check-out/return, due dates, overdue tracking; holds/reservations and reservation queues; member/patron accounts, borrowing history, fines; bulk import (CSV/MARC), ISBN auto-lookup, live ILS sync.
+Staff email/password authentication gates the management area; single staff/librarian role, no public login.
 
-**Related:** EPIC-001, EPIC-002, EPIC-003, EPIC-004, EPIC-005
+- US-004 [critical] Staff login: valid credentials authenticate and open the dashboard (AC-010); invalid credentials denied with generic error not revealing which field was wrong (AC-011); single staff role has full create/edit/delete/upload rights, no admin/editor tiers at launch (AC-012).
+- US-005 [high] Protect management area: unauthenticated access to any management page/action redirects to login and the action does not proceed (AC-013); logout ends session, requiring re-login (AC-014).
+Assumption stated: email/password auth is sufficient; no separate admin vs editor tiers at launch.
 
-### US-001 · draft · source: requirements:US-001
+**Related:** US-004, US-005, NFR-001, NFR-002, NFR-007
 
-Critical story: anonymous public visitors can keyword-search the catalogue without logging in, with results powered by Meilisearch.
+### EPIC-004 · draft · source: requirements:EPIC-004
 
-As a member of the public, search the catalogue by keyword without logging in to find items matching title, author, subject or description.
-Acceptance criteria:
-- AC-001: Anonymous visitor on public home page enters a keyword and submits; system returns relevance-ranked matches via Meilisearch, no login required.
-- AC-002: A keyword matching no items shows an empty-results message; search box remains available to refine the query.
-- AC-003: Against a catalogue of up to 10,000 items, results display each item's title, author and availability status.
+Staff manually create, edit, delete catalogue records and manage them via a dashboard; manual entry is the only data-entry path (no bulk import/ISBN lookup/ILS sync).
 
-**Related:** EPIC-001, AC-001, AC-002, AC-003, NFR-004, NFR-005
+- US-006 [critical] Create item record: full bibliographic form including shelf/location and availability saves a record and makes it searchable via Meilisearch (AC-015); missing required field blocks save and is flagged (AC-016); no bulk import/ISBN lookup/ILS sync offered (AC-017).
+- US-007 [high] Edit item record: changes update record and propagate to public detail page and search index (AC-018); availability change is reflected publicly and as a filter value (AC-019).
+- US-008 [medium] Delete item record: deletion requires confirmation (AC-021) and removes record from catalogue and public search/browse (AC-020).
+- US-009 [high] Management dashboard: lists records with create/open/edit/delete controls (AC-022); supports search/filter within dashboard to find a record (AC-023).
 
-### US-002 · draft · source: requirements:US-002
+**Related:** US-006, US-007, US-008, US-009, NFR-004
 
-High-priority story: public users can filter/browse results by author, subject/category and availability, combinable with keyword search.
+### EPIC-005 · draft · source: requirements:EPIC-005
 
-As a member of the public, filter and browse catalogue results by author, subject/category and availability to narrow results.
-Acceptance criteria:
-- AC-004: Applying an author, subject/category or availability filter updates the result list via Meilisearch filtering.
-- AC-005: Combining keyword search with filters returns results matching both the keyword and all active filters.
-- AC-006: Clearing a filter updates the list to remove that filter's restriction.
+Staff upload, replace and remove cover images for item records, stored in Amazon S3 and shown publicly or as a placeholder.
 
-**Related:** EPIC-001, AC-004, AC-005, AC-006, NFR-004
+- US-010 [medium] Upload cover: valid image uploaded during create/edit is stored in S3 and linked to the record (AC-024); shown in public results/detail (AC-025); unsupported file types are rejected with a message, no invalid image attached (AC-026).
+- US-011 [low] Replace/remove cover: new upload replaces stored image and prior one (AC-027); removing a cover falls back to placeholder in public catalogue (AC-028).
 
-### US-003 · draft · source: requirements:US-003
-
-High-priority story: public visitors can open a full item detail page from search/browse results.
-
-As a member of the public, open an item's detail page from search or browse results to see all information the library holds about that item.
-Acceptance criteria:
-- AC-007: Selecting an item from results opens a detail page showing title, author, ISBN, publisher, year, subject/category, description, cover image, shelf/location and availability status.
-- AC-008: If no cover image is uploaded, a placeholder image is shown and remaining fields display normally.
-- AC-009: The staff-set availability status is displayed as read-only information.
-
-**Related:** EPIC-002, AC-007, AC-008, AC-009
-
-### US-004 · draft · source: requirements:US-004
-
-Critical story: staff log in with email/password to reach the management dashboard under a single staff/librarian role.
-
-As a library staff member, log in with email and password to access the catalogue management area.
-Acceptance criteria:
-- AC-010: Valid credentials authenticate the staff member and route to the management dashboard.
-- AC-011: Incorrect email or password is denied with a generic error that does not reveal which field was wrong.
-- AC-012: The single staff/librarian role can create, edit, delete records and upload cover images; no separate admin/editor tiers at launch (explicit assumption).
-
-**Related:** EPIC-003, AC-010, AC-011, AC-012, NFR-002, NFR-007
-
-### US-005 · draft · source: requirements:US-005
-
-High-priority story: the management area is restricted to authenticated staff; anonymous users are redirected to login.
-
-As a library, ensure the management area is accessible only to authenticated staff so the public cannot alter catalogue records.
-Acceptance criteria:
-- AC-013: An anonymous visitor attempting to open any management page/action is redirected to staff login; the action is not performed.
-- AC-014: Logging out ends the session; management pages again require login.
-
-**Related:** EPIC-003, AC-013, AC-014, NFR-001
-
-### US-006 · draft · source: requirements:US-006
-
-Critical story: logged-in staff manually create a new item record, which then becomes searchable publicly.
-
-As a library staff member, manually create a new item record with bibliographic fields, availability and shelf/location so it appears in the public catalogue.
-Acceptance criteria:
-- AC-015: Completing the new-item form (title, author, ISBN, publisher, year, subject/category, description, shelf/location, availability) and saving stores the record and makes it searchable via Meilisearch.
-- AC-016: Missing a required field blocks save and indicates which field is required.
-- AC-017: Manual entry is the only data-entry method; no bulk import, ISBN auto-lookup or ILS sync is offered.
-
-**Related:** EPIC-004, AC-015, AC-016, AC-017
-
-### US-007 · draft · source: requirements:US-007
-
-High-priority story: staff edit existing item records, with changes reflected publicly and in the search index.
-
-As a library staff member, edit an existing item record, including availability status and shelf/location, to keep the catalogue accurate.
-Acceptance criteria:
-- AC-018: Changing and saving fields updates the record, the public catalogue and the search index.
-- AC-019: Changing availability status updates the public detail page and the availability filter.
-
-**Related:** EPIC-004, AC-018, AC-019
-
-### US-008 · draft · source: requirements:US-008
-
-Medium-priority story: staff delete item records no longer held, with a confirmation step.
-
-As a library staff member, delete an item record so items no longer held are removed from the catalogue.
-Acceptance criteria:
-- AC-020: Confirmed deletion removes the record so it no longer appears in public search or browse results.
-- AC-021: Deletion requires confirmation; cancelling keeps the record.
-
-**Related:** EPIC-004, AC-020, AC-021
-
-### US-009 · draft · source: requirements:US-009
-
-High-priority story: a staff dashboard lists catalogue records with create/find/open controls.
-
-As a library staff member, use a dashboard listing catalogue records to find and open them for management.
-Acceptance criteria:
-- AC-022: The dashboard lists existing records and provides controls to create a new record and open an existing one for edit/delete.
-- AC-023: Searching/filtering within the dashboard surfaces matching records for selection.
-
-**Related:** EPIC-004, AC-022, AC-023
-
-### US-010 · draft · source: requirements:US-010
-
-Medium-priority story: staff upload a cover image for an item, stored in S3 and shown publicly.
-
-As a library staff member, upload a cover image when creating or editing an item record so the item displays a cover publicly.
-Acceptance criteria:
-- AC-024: Uploading an image on save stores it in Amazon S3 and associates it with the record.
-- AC-025: The public sees the stored cover image in search results and on the detail page.
-- AC-026: Uploading an invalid/unsupported image file is rejected with a message; no invalid image is attached.
-
-**Related:** EPIC-005, AC-024, AC-025, AC-026, NFR-003
-
-### US-011 · draft · source: requirements:US-011
-
-Low-priority story: staff can replace or remove an item's existing cover image.
-
-As a library staff member, replace or remove an item's cover image to correct or update what is displayed.
-Acceptance criteria:
-- AC-027: Uploading a new image on an item that already has a cover replaces it in S3 and in display.
-- AC-028: Removing a cover and saving falls back to the placeholder image publicly.
-
-**Related:** EPIC-005, AC-027, AC-028
+**Related:** US-010, US-011, NFR-003
 
 ### NFR-001 · draft · source: requirements:NFR-001
 
-Security NFR: management area must be reachable only by authenticated staff.
+Security: management area restricted to authenticated staff only.
 
-All management-area pages/actions must be reachable only by authenticated staff. Anonymous attempts redirect to staff login without performing the action. Logging out ends the session, requiring re-login for those pages.
+All management pages/actions reachable only by authenticated staff; anonymous attempts redirect to login without performing the action; logout ends session requiring re-login.
 
 **Related:** US-005
 
 ### NFR-002 · draft · source: requirements:NFR-002
 
-Security NFR: failed logins must show a generic error without revealing which credential was wrong.
+Security: failed login attempts must not reveal which credential field was wrong.
 
-On failed login, the system must show a generic error and must not reveal whether the email or password was incorrect.
+Login failures return a generic error message regardless of whether the email or password was incorrect.
 
 **Related:** US-004
 
 ### NFR-003 · draft · source: requirements:NFR-003
 
-Security NFR: only valid, supported image files may be stored as cover images.
+Security: only valid/supported image files may be stored as covers.
 
-Cover image uploads must be validated so only supported image files are stored; any other file type is rejected with a message, and no invalid image is attached to the record.
+Cover uploads are validated; unsupported/invalid files are rejected with a message and not attached to the record.
 
 **Related:** US-010
 
 ### NFR-004 · draft · source: requirements:NFR-004
 
-Scalability NFR: the catalogue must reliably support up to ~10,000 items with modest traffic.
+Scalability: catalogue must reliably support up to ~10,000 items under modest traffic.
 
-Target: up to approximately 10,000 item records with modest traffic; search and browse results must remain reliable at this scale.
+Search and browse must return results reliably at target scale of ~10,000 item records.
 
 **Related:** US-001, US-002
 
 ### NFR-005 · draft · source: requirements:NFR-005
 
-Usability NFR: keyword search must tolerate misspellings and rank by relevance.
+Usability: keyword search must tolerate typos/misspellings.
 
-Keyword search must tolerate misspellings so a mistyped title, author or subject still finds matching items, with results ranked by relevance.
+A slightly mistyped title, author or subject must still find matching items, with results ranked by relevance.
 
 **Related:** US-001
 
 ### NFR-006 · draft · source: requirements:NFR-006
 
-Compatibility NFR: delivered as a responsive web app for desktop and mobile browsers; no native app.
+Compatibility: responsive web app for desktop and mobile browsers, no native app.
 
-Applies to whole system. The product is a responsive web application working in desktop and mobile browsers; there is no native mobile app.
+Applies to the whole system; delivered as a single responsive web application, no native mobile app planned.
 
 ### NFR-007 · draft · source: requirements:NFR-007
 
-Security NFR (accepted risk): single staff role at launch, no admin/editor tiers.
+Accepted risk: single staff role at launch, no admin/editor tiers.
 
-At launch there is a single staff/librarian role with full create/edit/delete/cover-management access; no separate admin and editor tiers. Finer-grained access control is explicitly accepted as out of scope for now.
+One staff/librarian role has full create/edit/delete/cover-management rights; finer-grained access control explicitly deferred as accepted risk.
 
 **Related:** US-004
 
 ### NFR-008 · draft · source: requirements:NFR-008
 
-Availability NFR (accepted risk): offline use is explicitly out of scope.
+Accepted risk: no offline use supported.
 
-Applies to whole system. The catalogue is only usable online; offline mode is accepted as out of scope, so the application is not expected to work without a network connection.
+Applies to the whole system; the catalogue requires network connectivity and offline mode is explicitly out of scope.
 <!-- sdlc:auto:end narrative -->
 
 <!-- sdlc:auto:start summary -->
