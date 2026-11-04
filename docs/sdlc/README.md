@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 Build a Library Catalogue System
 
-**Documentation version:** v3
+**Documentation version:** v4
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -27,11 +27,11 @@ Build a Library Catalogue System
 | [API reference](development/api-reference.md) | 1 route |
 | [Test report](testing/test-report.md) | not run yet |
 | [Tests](testing/test-cases.md) | 0 tests |
-| [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
-| [Runbook](deployment/runbook.md) | not deployed yet |
-| [Release notes](deployment/release-notes.md) | 0 releases |
+| [Deployment guide](deployment/deployment-guide.md) | deployed |
+| [Runbook](deployment/runbook.md) | deployed |
+| [Release notes](deployment/release-notes.md) | 1 release |
 | [Traceability matrix](traceability-matrix.md) | 11 requirements |
-| [Changelog](CHANGELOG.md) | 3 versions |
+| [Changelog](CHANGELOG.md) | 4 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -71,7 +71,12 @@ Build a Library Catalogue System
 
 ### Deployment
 
-- No deployment recorded yet -- environment setup, release process, and runtime configuration (AWS, S3, Meilisearch, SMTP) are undocumented.
+- No deployment date recorded.
+- No indication of which requirements/user stories (US-001 through US-011) are included in this release.
+- No release notes, change log, or list of tickets deployed.
+- No record of who approved or executed the deployment.
+- No rollback or incident-response plan documented.
+- No confirmation of test results or sign-off prior to this release.
 
 ### Maintenance
 
